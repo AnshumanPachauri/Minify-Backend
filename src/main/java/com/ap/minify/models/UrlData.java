@@ -20,4 +20,5 @@ public class UrlData {
 	private int clickCount;
 	private String createdBy;
 	private boolean isActive;
+	private java.util.List<ClickEvent> clickEvent;
 }
