@@ -1,5 +1,6 @@
 package com.ap.minify.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -11,6 +12,7 @@ import tools.jackson.databind.ObjectMapper;
 @Configuration
 public class RedisConfig {
 
+	@Bean
 	public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory,
 			ObjectMapper objectMapper) {
 
@@ -18,6 +20,10 @@ public class RedisConfig {
 		redisTemplate.setConnectionFactory(redisConnectionFactory);
 
 		StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
+		/*
+		 * GenericJacksonJsonRedisSerializer genericJacksonJsonRedisSerializer = new
+		 * GenericJacksonJsonRedisSerializer( objectMapper);
+		 */
 		GenericJacksonJsonRedisSerializer genericJacksonJsonRedisSerializer = new GenericJacksonJsonRedisSerializer(
 				objectMapper);
 		redisTemplate.setKeySerializer(stringRedisSerializer);
