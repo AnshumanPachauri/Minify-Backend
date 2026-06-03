@@ -13,6 +13,7 @@ import com.ap.minify.models.RateLimitData;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 public class RateLimitService {
 
 	private final RedisTemplate<String, Object> redisTemplate;
+	private final ObjectMapper objectMapper;
 
 	@Value("${minify.rate-limit.requests-per-minute}")
 	private int requestsPerMinute;
@@ -43,7 +45,7 @@ public class RateLimitService {
 		RateLimitData rateLimitData = getRateLimitDataFromRedis(redisKey);
 
 		if (rateLimitData == null) {
-			rateLimitData = rateLimitDataMap.computeIfAbsent(clientIp, (String k) -> RateLimitData.builder().minCount(0)
+			rateLimitData = rateLimitDataMap.computeIfAbsent(clientIp, k -> RateLimitData.builder().minCount(0)
 					.hourCount(0).minWindowStart(now).hourWindowStart(now).build());
 		}
 
@@ -96,11 +98,54 @@ public class RateLimitService {
 
 	private RateLimitData getRateLimitDataFromRedis(String redisKey) {
 		try {
-			return (RateLimitData) redisTemplate.opsForValue().get(redisKey);
+			Object value = redisTemplate.opsForValue().get(redisKey);
+			if (value == null) {
+				return null;
+			}
+
+			return objectMapper.convertValue(value, RateLimitData.class);
 		} catch (Exception e) {
 			log.error("Error while getting rate limit data from Redis for key {}: {}", redisKey, e.getMessage());
 			return null;
 		}
+	}
+
+	public int getRemainingRequests(String clientIp) {
+		String redisKey = RATE_LIMIT_KEY_PREFIX + clientIp;
+		RateLimitData rateLimitData = getRateLimitDataFromRedis(redisKey);
+
+		if (rateLimitData == null) {
+			return requestsPerMinute; // If no data, assume full quota is available
+		}
+
+		LocalDateTime now = LocalDateTime.now();
+		if (!isWithinMinuteWindow(rateLimitData, now)) {
+			return requestsPerMinute; // If the minute window has expired, reset the count
+		}
+
+		int remainingRequests = requestsPerMinute - rateLimitData.getMinCount();
+		return Math.max(remainingRequests, 0); // Ensure it doesn't go below 0
+	}
+
+	public Long getTimeUntilReset(String clientIp) {
+		String redisKey = RATE_LIMIT_KEY_PREFIX + clientIp;
+		RateLimitData rateLimitData = getRateLimitDataFromRedis(redisKey);
+
+		if (rateLimitData == null || rateLimitData.getMinWindowStart() == null) {
+			return 0L; // If no data, assume no wait time
+		}
+
+		LocalDateTime now = LocalDateTime.now();
+		if (rateLimitData.getMinCount() >= requestsPerMinute) {
+			LocalDateTime nextMinute = rateLimitData.getMinWindowStart().plusMinutes(1);
+			return ChronoUnit.SECONDS.between(now, nextMinute);
+		}
+
+		if (rateLimitData.getHourCount() >= requestsPerHour) {
+			LocalDateTime nextHour = rateLimitData.getHourWindowStart().plusHours(1);
+			return ChronoUnit.SECONDS.between(now, nextHour);
+		}
+		return 0L;
 	}
 
 }
