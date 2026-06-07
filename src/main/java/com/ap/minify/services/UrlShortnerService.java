@@ -188,6 +188,10 @@ public class UrlShortnerService {
 				.collect(Collectors.groupingBy(c -> c.getTimeStamp().getHour() + ":00", Collectors.summingInt(e -> 1)));
 		Map<String, Integer> clicksByDay = clicks.stream().collect(
 				Collectors.groupingBy(c -> c.getTimeStamp().toLocalDate().toString(), Collectors.summingInt(e -> 1)));
+
+		List<ClickEvent> recentClick = clicks.stream().sorted((a, b) -> b.getTimeStamp().compareTo(a.getTimeStamp()))
+				.limit(10).toList();
+
 	}
 
 }
