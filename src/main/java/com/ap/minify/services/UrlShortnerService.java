@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import com.ap.minify.dto.ShortenUrlRequest;
 import com.ap.minify.dto.ShortenUrlResponse;
 import com.ap.minify.dto.UrlStatsResponse;
+import com.ap.minify.dto.urlAnalyticsResponse;
 import com.ap.minify.models.ClickEvent;
 import com.ap.minify.models.UrlData;
 
@@ -171,6 +173,18 @@ public class UrlShortnerService {
 		return Optional.of(UrlStatsResponse.builder().shortCode(shortCode).originalUrl(urlData.getOriginalUrl())
 				.clickCount(urlData.getClickCount()).createdAt(urlData.getCreatedAt()).expiresAt(urlData.getExpiresAt())
 				.isActive(urlData.isActive()).createdBy(urlData.getCreatedBy()).build());
+	}
+
+	public Optional<urlAnalyticsResponse> getUrlAnalytics(String shortCode) {
+		UrlData urlData = urlMappings.get(shortCode);
+
+		if (urlData == null) {
+			return Optional.empty();
+		}
+		List<ClickEvent> clicks = clickAnalytics.getOrDefault(shortCode, new ArrayList<>());
+		Map<String, Integer> clicksByReferrer = clicks.stream().filter(c -> c.getReferrer() != null)
+				.collect(Collectors.groupingBy(ClickEvent::getReferrer, Collectors.summingInt(e -> 1)));
+		return null;
 	}
 
 }
