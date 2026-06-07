@@ -186,7 +186,8 @@ public class UrlShortnerService {
 				.collect(Collectors.groupingBy(ClickEvent::getReferrer, Collectors.summingInt(e -> 1)));
 		Map<String, Integer> clicksByHour = clicks.stream()
 				.collect(Collectors.groupingBy(c -> c.getTimeStamp().getHour() + ":00", Collectors.summingInt(e -> 1)));
-		return null;
+		Map<String, Integer> clicksByDay = clicks.stream().collect(
+				Collectors.groupingBy(c -> c.getTimeStamp().toLocalDate().toString(), Collectors.summingInt(e -> 1)));
 	}
 
 }
