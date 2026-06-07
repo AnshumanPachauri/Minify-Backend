@@ -184,6 +184,8 @@ public class UrlShortnerService {
 		List<ClickEvent> clicks = clickAnalytics.getOrDefault(shortCode, new ArrayList<>());
 		Map<String, Integer> clicksByReferrer = clicks.stream().filter(c -> c.getReferrer() != null)
 				.collect(Collectors.groupingBy(ClickEvent::getReferrer, Collectors.summingInt(e -> 1)));
+		Map<String, Integer> clicksByHour = clicks.stream()
+				.collect(Collectors.groupingBy(c -> c.getTimeStamp().getHour() + ":00", Collectors.summingInt(e -> 1)));
 		return null;
 	}
 
