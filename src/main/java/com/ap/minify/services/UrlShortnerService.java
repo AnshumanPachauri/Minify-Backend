@@ -192,6 +192,10 @@ public class UrlShortnerService {
 		List<ClickEvent> recentClick = clicks.stream().sorted((a, b) -> b.getTimeStamp().compareTo(a.getTimeStamp()))
 				.limit(10).toList();
 
+		return Optional.of(urlAnalyticsResponse.builder().shortCode(shortCode).origialUrl(urlData.getOriginalUrl())
+				.totalClicks(urlData.getClickCount()).createdAt(urlData.getCreatedAt())
+				.expiresAt(urlData.getExpiresAt()).recentClicks(recentClick).clicksByReferrer(clicksByReferrer)
+				.clicksByHour(clicksByHour).clicksByDay(clicksByDay).build());
 	}
 
 }
