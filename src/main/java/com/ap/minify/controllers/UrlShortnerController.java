@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ap.minify.dto.ShortenUrlRequest;
 import com.ap.minify.dto.ShortenUrlResponse;
 import com.ap.minify.dto.UrlStatsResponse;
+import com.ap.minify.dto.urlAnalyticsResponse;
 import com.ap.minify.services.RateLimitService;
 import com.ap.minify.services.UrlShortnerService;
 
@@ -84,6 +85,17 @@ public class UrlShortnerController {
 			return ResponseEntity.ok(stats.get());
 		}
 
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("Error", "ShortCode not found"));
+	}
+
+	@GetMapping("/analytics/{shortCode}")
+	public ResponseEntity<?> geturlAnalytics(@PathVariable String shortCode) {
+
+		Optional<urlAnalyticsResponse> analytics = urlShortnerService.getUrlAnalytics(shortCode);
+
+		if (analytics.isPresent()) {
+			return ResponseEntity.ok(analytics.get());
+		}
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("Error", "ShortCode not found"));
 	}
 
